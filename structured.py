@@ -43,10 +43,26 @@ def generate_file_list(base_dir, output_path, hash_function="md5", size_format="
             for file in files:
                 file_path = os.path.join(root, file)
                 relative_path = os.path.relpath(file_path, base_dir)
-                edit_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
-                size = os.path.getsize(file_path)
-                size_display = format_size(size, size_format)
-                hash_value = get_file_hash(file_path, hash_function)
+                
+                # print(edit_time_enable)
+                # print(size_enable)
+                # print(hash_enable)
+                
+                if not edit_time_enable == "False":
+                    edit_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    edit_time = "-"
+
+                if not size_enable == "False":
+                    size = os.path.getsize(file_path)
+                    size_display = format_size(size, size_format)
+                else:
+                    size_display = "-"
+                
+                if not hash_enable == "False":
+                    hash_value = get_file_hash(file_path, hash_function)
+                else:
+                    hash_value = "-"
 
                 # Write file info to output
                 output_file.write(f"{relative_path} | {edit_time} | {size_display} | {hash_value}\n")
@@ -59,7 +75,11 @@ def read_settings(settings_path):
     config.read(settings_path)
     hash_function = config.get("Settings", "hash_function", fallback="md5")
     size_format = config.get("Settings", "size_format", fallback="1")
-    return hash_function, size_format
+    
+    hash_enable = config.get("Settings", "hash_enable", fallback=True)
+    edit_time_enable = config.get("Settings", "edit_time_enable", fallback=True)
+    size_enable = config.get("Settings", "size_enable", fallback=True)
+    return hash_function, size_format, hash_enable, edit_time_enable, size_enable
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="List all files in a directory and export their metadata and hash.")
@@ -74,7 +94,7 @@ if __name__ == "__main__":
 
     try:
         # Read settings from settings.ini
-        hash_function, size_format = read_settings(settings_file)
+        hash_function, size_format, hash_enable, edit_time_enable, size_enable = read_settings(settings_file)
         # Validate hash function
         hashlib.new(hash_function)
         # Validate size format
